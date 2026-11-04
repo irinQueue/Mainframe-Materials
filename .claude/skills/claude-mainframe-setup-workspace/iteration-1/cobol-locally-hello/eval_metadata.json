@@ -1,0 +1,10 @@
+{
+  "eval_name": "cobol-locally-hello",
+  "prompt": "i do batch COBOL all day on the mainframe and the Hercules thing is painfully slow. can i run cobol locally on this laptop? show me something actually running so i believe it",
+  "assertions": [
+    "The reply confirms GnuCOBOL (cobc 3.2.0) is available on this PC",
+    "The reply shows real program output from a COBOL program that was compiled and run, including a COMP-3 sum of 1,500.00",
+    "The reply states this is a local GnuCOBOL check, not z/OS Enterprise COBOL",
+    "The compile and run went through the existing cobol-local-compile-run scripts (compile_local.sh and run_local.sh)"
+  ]
+}

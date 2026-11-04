@@ -1,0 +1,1 @@
+Read src/INTAKE.cbl. Summarise in bullet points: the files it uses, the record layout, how it decides a firm is valid, and what it writes to each output file. No code changes in this step. Keep it to at most 8 bullets of one line each.

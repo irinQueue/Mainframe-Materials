@@ -1,0 +1,1 @@
+Two corrections before I approve. (1) Step 6: MOVE SPACES to the whole reject record before filling it; the unused FILLER byte holds low-values and a LINE SEQUENTIAL WRITE then fails with file status 71. (2) Test FILE STATUS after every WRITE as well as every OPEN, and stop with return code 12 if a WRITE fails. Show only the changed steps, one line each, and no code.

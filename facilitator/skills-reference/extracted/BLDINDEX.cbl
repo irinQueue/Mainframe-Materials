@@ -1,0 +1,48 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. BLDINDEX.
+      * LOCAL TEST UTILITY - PLAYS IDCAMS BLDINDEX (ADBHMINI): COPIES THE
+      * MASTER AS CREATED WITHOUT ITS PATH (DD OLDMAST) INTO A MASTER
+      * THAT CARRIES THE UNIQUE ALTERNATE KEY ON 5-10 (DD ALADSI10).
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT OLD-FILE ASSIGN TO OLDMAST
+                  ORGANIZATION IS INDEXED
+                  ACCESS MODE IS SEQUENTIAL
+                  RECORD KEY IS OLD-KEY
+                  FILE STATUS IS WS-OS.
+           SELECT ALADSI10-FILE ASSIGN TO ALADSI10
+                  ORGANIZATION IS INDEXED
+                  ACCESS MODE IS SEQUENTIAL
+                  RECORD KEY IS ALL-CNTR-PRIMARY-KEY
+                  ALTERNATE RECORD KEY IS ALL-CNTR-KEY-CON-NUM
+                  FILE STATUS IS WS-MS.
+       DATA DIVISION.
+       FILE SECTION.
+       FD  OLD-FILE
+           RECORD IS VARYING IN SIZE FROM 850 TO 11050 CHARACTERS
+                  DEPENDING ON WS-LEN.
+       01  OLD-REC.
+           05  OLD-KEY                     PIC X(20).
+           05  FILLER                      PIC X(11030).
+       FD  ALADSI10-FILE
+           RECORD IS VARYING IN SIZE FROM 850 TO 11050 CHARACTERS
+                  DEPENDING ON WS-LEN.
+       COPY ALLHMREC REPLACING ==:P:== BY ==ALL==.
+       WORKING-STORAGE SECTION.
+       01  WS-OS                           PIC X(2).
+       01  WS-MS                           PIC X(2).
+       01  WS-LEN                          PIC 9(5) COMP VALUE 850.
+       PROCEDURE DIVISION.
+           OPEN INPUT OLD-FILE OUTPUT ALADSI10-FILE
+           PERFORM UNTIL WS-OS NOT = '00'
+               READ OLD-FILE NEXT RECORD
+               IF WS-OS = '00'
+                   MOVE OLD-REC (1:WS-LEN) TO
+                        ALL-ADSI-MASTER-CNTR-RECORD
+                   WRITE ALL-ADSI-MASTER-CNTR-RECORD
+               END-IF
+           END-PERFORM
+           DISPLAY 'BLDINDEX: LAST FS=' WS-OS ' WRITE FS=' WS-MS
+           CLOSE OLD-FILE ALADSI10-FILE
+           STOP RUN.

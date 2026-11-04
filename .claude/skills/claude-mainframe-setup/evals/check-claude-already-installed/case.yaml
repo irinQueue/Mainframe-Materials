@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: check-claude-already-installed
+expected_outcome: |
+  On a PC that already has Claude Code and GnuCOBOL, the run checks the
+  environment through Command Prompt, reports the installed Claude Code
+  version, does not reinstall anything, runs the COBOL hello-world, and ends
+  with a simple setup-complete message.

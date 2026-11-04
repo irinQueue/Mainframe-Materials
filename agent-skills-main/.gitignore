@@ -1,0 +1,28 @@
+# Directories
+backups
+cache
+debug
+downloads
+file-history
+paste-cache
+plans
+plugins
+projects
+sessions
+shell-snapshots
+tasks
+telemetry
+
+# JSON
+.credentials.json
+settings.local.json
+.claude/settings.local.json
+history.jsonl
+mcp-needs-auth-cache.json
+policy-limits.json
+settings.json
+stats-cache.json
+
+# Lock
+.credentials.lock
+.last-cleanup

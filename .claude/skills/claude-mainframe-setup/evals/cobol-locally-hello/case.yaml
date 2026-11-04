@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: cobol-locally-hello
+expected_outcome: |
+  The run confirms GnuCOBOL is available, compiles and runs the hello-world
+  COBOL program locally, shows its real DISPLAY output including the COMP-3
+  sum of 1,500.00, and states that this is a local GnuCOBOL check rather than
+  z/OS Enterprise COBOL.

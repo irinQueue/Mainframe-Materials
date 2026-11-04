@@ -1,0 +1,1 @@
+I reset src/INTAKE.cbl to the Activity 1 version. The plan is approved. Implement ONLY this: producer records (type P) with the TIN rule, plus taking the input file name from the command line (default data/DAILY-A2.DAT). Do not touch anything else. Reply in one line when done.

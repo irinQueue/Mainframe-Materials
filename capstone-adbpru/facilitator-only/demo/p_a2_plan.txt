@@ -1,0 +1,1 @@
+For each change in your list, write a step-by-step plan. Order them smallest first: at most 6 numbered steps, one line each, only the changes in your list (no extra files, scripts or test data). Do not write any code. Stop and wait for my approval.

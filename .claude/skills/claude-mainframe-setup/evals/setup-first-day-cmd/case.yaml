@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: setup-first-day-cmd
+expected_outcome: |
+  The run checks what is installed, installs only what is missing (nothing, on
+  a PC that is already set up), verifies from Command Prompt, runs the COBOL
+  hello-world, tells the user a one-time sign-in is still needed by typing
+  claude, and does not claim the user is already logged in.

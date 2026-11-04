@@ -1,0 +1,6 @@
+Go to plan mode. You are a senior COBOL developer.
+Task: plan INTAKE, a batch program that reads data/DAILY-A1.DAT (fictional test data) and splits it into out/VALID.DAT and out/REJECT.DAT.
+Context: GnuCOBOL 3.2, fixed format (columns 8-72), LINE SEQUENTIAL files. Record layout (60 bytes): col 1 REC-TYPE (F firm, P producer); cols 2-9 ID (8); cols 10-17 PARENT-ID (8, blank on a firm); cols 18-37 NAME (20); cols 38-46 TIN (9, blank on a firm); col 47 STATUS (A or I); cols 48-60 FILLER (spaces).
+Rule: a firm record with a blank firm ID is rejected. Reject records are the original 60 bytes, a space, then an 8-character reason: BLANK-ID.
+Constraints: test FILE STATUS after every OPEN; return code 12 if the input is missing.
+No code yet. Give me a numbered plan: at most 8 steps, each step one line of 15 words or fewer, no open questions.
