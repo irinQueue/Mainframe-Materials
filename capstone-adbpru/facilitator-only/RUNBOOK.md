@@ -75,7 +75,66 @@ Checkpoints (guides, not requirements): spec scoring 80 or more and a plan by Da
 | A repo has edited `verify\` | Run your own copy of the checker (as above) and have the conversation. |
 | A Word or PowerPoint file will not save | It is open somewhere. Close it, or save under a new name. |
 
-## 6. Known limits
+## 6. Run and demo in VS Code
+
+A local GnuCOBOL run is a smoke test, not a z/OS result. Say so before you run anything.
+
+**Set up (once, 5 minutes)**
+
+1. In VS Code: `File > Open Folder` and choose `facilitator-only\demo\firm-producer-sync`. Click "Yes, I trust the authors".
+2. Open the terminal with Ctrl+` (PowerShell is fine).
+3. Put the compiler on the path for this terminal, then check it:
+   ```
+   $env:PATH = "C:\msys64\ucrt64\bin;C:\msys64\usr\bin;" + $env:PATH
+   cobc --version
+   ```
+   You should see `cobc (GnuCOBOL) 3.2.0`. The tasks below set this path for themselves; this step is only for typing commands by hand.
+4. Open `src\INTAKE.cbl`. The IBM Z Open Editor colours it as fixed-format COBOL.
+
+**Run it with the task menu (easiest)**
+
+Press Ctrl+Shift+P, type `Tasks: Run Task`, and pick one. The tasks are in `.vscode\tasks.json`.
+
+| Task | What it does | Expect |
+|---|---|---|
+| 1 Build INTAKE | `cobc -x -I src/copy -o bin/INTAKE src/INTAKE.cbl` | No output means success. Ctrl+Shift+B runs this one. |
+| 2 Run INTAKE on DAILY-A1 | Builds, then runs on `data\DAILY-A1.DAT` | `READ 8, VALID 6, REJECT 2` |
+| 3 Run INTAKE on DAILY-A2 | Builds, then runs on `data\DAILY-A2.DAT` | Counts for the second file; compare with `DAY0-ANSWER-KEY.md` |
+| 4 Show INTAKE report | Prints `out\INTAKE.RPT` | `RECORDS READ`, `VALID`, `REJECTED`, `FIRMS VALID`, `PRODUCERS VALID` |
+| 5 Run checker on reference solution | `check.sh` against `facilitator-only\reference` | PASS for INTAKE, UPDATE, REPORTS, PIPELINE |
+
+**Run it by hand (same thing, typed)**
+
+```
+cobc -x -I src/copy -o bin/INTAKE src/INTAKE.cbl
+bin/INTAKE data/DAILY-A1.DAT
+Get-Content out/INTAKE.RPT
+sh ../../../starter/verify/check.sh ../../reference
+```
+
+INTAKE takes the input file name on the command line and writes `out\VALID.DAT`, `out\REJECT.DAT` and `out\INTAKE.RPT`.
+
+**A 10-minute demo**
+
+1. (1 min) State the caveat above. Show the folders: `src`, `data`, `out`.
+2. (2 min) Open `src\INTAKE.cbl`. Point at the file-status checks and the reject paragraph.
+3. (2 min) Run task 1, then task 2. Show the three counts in the terminal.
+4. (2 min) Open `out\REJECT.DAT` and `out\VALID.DAT` in the editor. Match one reject to its reason.
+5. (1 min) Run task 3 and compare with the answer key.
+6. (2 min) Run task 5 and show four PASS lines. Then open a terminal, type `claude`, and ask it to explain one paragraph of `INTAKE.cbl`.
+
+**If it does not work**
+
+| Problem | Fix |
+|---|---|
+| `cobc` is not recognised | Step 3 was skipped, or MSYS2 is installed elsewhere. Fix the folder in `.vscode\tasks.json` and in the `$env:PATH` line. |
+| `return status: 1` with no message | The C compiler is not found. Put `ucrt64\bin` first on the path (see section 5). |
+| `sh` is not recognised | Add `C:\msys64\usr\bin` to the path, or run the checker from Git Bash. |
+| `out\` files are missing | The `out` folder must exist. Create it, then run again. |
+
+Verified here: the build, the INTAKE run on `DAILY-A1.DAT`, and the checker on the reference (four PASS) ran from Git Bash with MSYS2 on the path. The task menu itself and the PowerShell commands have not been run from VS Code. Do that in the setup check in section 1.
+
+## 7. Known limits
 
 - The checker tests eight days of fictional data. It is a smoke test, not proof of correctness, and not a z/OS test.
 - The reference solution and the expected answers were verified with GnuCOBOL 3.2.0 on one machine. Run step 1 on the real VM.

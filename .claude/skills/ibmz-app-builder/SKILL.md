@@ -93,7 +93,39 @@ it and fix every error and every warning you cannot justify.
 
 ### 6. Deliver and run
 
-Deliver the package plus a run book. For host steps use `hercules-zos-run`
+Deliver the package with two run-it-yourself files, so the trainee can run
+and demo what was generated without knowing the commands. Write them from the
+real package (actual program names, file names and test files), then run
+the commands in them before you hand them over.
+
+**`<package>/RUNBOOK.md`**, with these parts:
+1. One line saying a local GnuCOBOL run is a smoke test, not a z/OS result.
+2. Set up: open the package folder in VS Code, open the terminal, put
+   `C:\msys64\ucrt64\bin` first on `PATH`, check with `cobc --version`.
+3. A table of the VS Code tasks (below) with what each does and the output to
+   expect, taken from your own test run.
+4. The same steps typed by hand (`cobc -x ...`, the run command with its
+   input file, how to read the output files).
+5. A short demo script (about 10 minutes): show the source, build, run,
+   read the output, show one reject or error path.
+6. Troubleshooting (`cobc` not found, `return status: 1`, missing output
+   folder) and the list of placeholder installation names.
+7. Plain statement of what was compiled and run, what was only linted, and
+   what has not run anywhere.
+
+**`<package>/.vscode/tasks.json`** (version 2.0.0), with `options.env.PATH`
+set to the MSYS2 folders so tasks work without setup. Tasks: "Build <PGM>"
+for each batch program (the first one is the default build task), "Run <PGM>
+on <test file>" for each test file (depends on the build task), "Show
+output" for each output or report file, and "Lint" running
+`python -I .claude/skills/ibmz-app-builder/scripts/zlint.py <package>`.
+Use relative paths, no installation names, no real customer data. Check
+that the JSON parses. Do not add tasks for CICS, DB2, VSAM or a host.
+
+Keep both files in step with the code: when a program, file name or test
+file changes, update them in the same change.
+
+For host steps use `hercules-zos-run`
 (transfer, submit, read results, host traps) if the user has such a host;
 otherwise the local GnuCOBOL run is the proof. Every installation name is a
 placeholder until the user confirms it; list them in one place. At the end

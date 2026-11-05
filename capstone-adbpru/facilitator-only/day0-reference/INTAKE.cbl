@@ -116,6 +116,13 @@
            IF R-ID = SPACES
                MOVE "BLANK-ID" TO WS-REASON
            ELSE
+      * TABLE FULL: STOP WITH RETURN CODE 12. WITHOUT THIS CHECK THE
+      * NEXT MOVE WRITES PAST THE END OF WS-FIRM-TABLE.
+               IF WS-NFIRMS NOT < 50
+                   DISPLAY "FIRM TABLE FULL AT 50 FIRMS, RUN STOPPED"
+                   MOVE 12 TO RETURN-CODE
+                   STOP RUN
+               END-IF
                ADD 1 TO WS-NFIRMS
                MOVE R-ID TO WS-FIRM-ID (WS-NFIRMS)
                ADD 1 TO WS-CNT-FIRMS

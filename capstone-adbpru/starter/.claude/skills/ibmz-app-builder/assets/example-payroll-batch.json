@@ -1,0 +1,18 @@
+{"app": "Payroll Extract", "prefix": "PAY", "hlq": "USER01.PAY",
+ "copybooks": [
+  {"name": "EMPREC", "desc": "employee record", "fields": [
+    {"name": "EMP-ID", "pic": "9(6)"}, {"name": "EMP-NAME", "pic": "X(30)"},
+    {"name": "EMP-SALARY", "pic": "S9(7)V99", "comp3": true},
+    {"name": "EMP-DEPT", "pic": "X(4)"}, {"name": "FILLER", "pic": "X(35)"}]},
+  {"name": "REJREC", "desc": "reject record", "fields": [
+    {"name": "REJ-ID", "pic": "9(6)"}, {"name": "REJ-REASON", "pic": "X(40)"},
+    {"name": "FILLER", "pic": "X(34)"}]}],
+ "programs": [
+  {"name": "PAYEDT1", "type": "batch", "desc": "edit employee file",
+   "inputs": [{"dd": "EMPIN", "copybook": "EMPREC", "recfm": "FB", "lrecl": 80}],
+   "outputs": [{"dd": "EMPGOOD", "copybook": "EMPREC", "lrecl": 80},
+               {"dd": "EMPREJ", "copybook": "REJREC", "lrecl": 80}]},
+  {"name": "PAYRPT1", "type": "batch", "desc": "salary report",
+   "inputs": [{"dd": "EMPGOOD", "copybook": "EMPREC", "lrecl": 80}],
+   "outputs": [{"dd": "RPTOUT", "lrecl": 132}]}],
+ "run_order": ["PAYEDT1", "PAYRPT1"]}
