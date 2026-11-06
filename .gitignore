@@ -1,2 +1,11 @@
 capstone-adbpru/facilitator-only/firm-producer-sync-key
 capstone-adbpru/facilitator-only/firm-producer-sync-key
+capstone-adbpru/facilitator-only/firm-producer-sync-key
+capstone-adbpru/facilitator-only/demo/firm-producer-sync
+capstone-adbpru/facilitator-only/demo2/firm-producer-sync
+capstone-adbpru/facilitator-only/demo2/firm-producer-sync
+capstone-adbpru/facilitator-only/demo2/firm-producer-sync
+
+# Large media - too big for GitHub
+Video material/*.mp4
+Video material/*.m4a
