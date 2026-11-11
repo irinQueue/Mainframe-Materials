@@ -1,0 +1,56 @@
+{
+  // COBOL lab tasks - run with  Terminal > Run Task...  or  Ctrl+Shift+B
+  // Works with PowerShell (Windows) and bash (Linux/WSL) because every
+  // path uses forward slashes and runs from the project folder.
+  "version": "2.0.0",
+  "options": { "cwd": "${workspaceFolder}" },
+  "tasks": [
+    {
+      "label": "COBOL: Compile current file",
+      "type": "shell",
+      "command": "cobc",
+      "args": [
+        "-x", "-I", "copybooks",
+        "-o", "bin/${fileBasenameNoExtension}.exe",
+        "${file}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "COBOL: Run current program",
+      "type": "shell",
+      "command": "./bin/${fileBasenameNoExtension}.exe",
+      "problemMatcher": []
+    },
+    {
+      "label": "COBOL: Compile + Run current file",
+      "dependsOrder": "sequence",
+      "dependsOn": ["COBOL: Compile current file", "COBOL: Run current program"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "COBOL: Build EMPPAY (with CALCTAX)",
+      "type": "shell",
+      "command": "cobc",
+      "args": [
+        "-x", "-fstatic-call", "-I", "copybooks",
+        "-o", "bin/EMPPAY.exe",
+        "src/EMPPAY.cbl", "src/CALCTAX.cbl"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "COBOL: Run EMPPAY",
+      "type": "shell",
+      "command": "./bin/EMPPAY.exe",
+      "problemMatcher": []
+    },
+    {
+      "label": "COBOL: Build + Run EMPPAY",
+      "dependsOrder": "sequence",
+      "dependsOn": ["COBOL: Build EMPPAY (with CALCTAX)", "COBOL: Run EMPPAY"],
+      "problemMatcher": []
+    }
+  ]
+}

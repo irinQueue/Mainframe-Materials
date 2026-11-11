@@ -1,0 +1,11 @@
+{
+  "eval_name": "setup-first-day-cmd",
+  "prompt": "its my first day of the claude code training for our mainframe team. please setup claude so i can use it from the command prompt, i dont really know what i need",
+  "assertions": [
+    "Nothing was installed because everything required was already present",
+    "The reply tells the user to type claude in Command Prompt and complete a one-time sign-in",
+    "The reply does not claim the user is already signed in",
+    "Claude Code was verified from Command Prompt (cmd.exe)",
+    "A COBOL hello-world was compiled and run, and its output is shown"
+  ]
+}

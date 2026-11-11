@@ -1,0 +1,98 @@
+{
+    "version": "2.0.0",
+    "inputs": [
+        {
+            "id": "infile",
+            "type": "pickString",
+            "description": "Input file for INTAKE",
+            "default": "data/DAILY-A1.DAT",
+            "options": [
+                "data/DAILY-A1.DAT",
+                "data/DAILY-A2.DAT",
+                "data/T-MIX.DAT",
+                "data/T-EMPTY.DAT"
+            ]
+        }
+    ],
+    "tasks": [
+        {
+            "label": "INTAKE: build",
+            "type": "process",
+            "command": "C:\\msys64\\ucrt64\\bin\\cobc.exe",
+            "args": [
+                "-x",
+                "-o",
+                "bin/INTAKE",
+                "src/INTAKE.cbl"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "COB_COPY_DIR": "cpy"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": {
+                "owner": "cobol",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}"
+                ],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+): (error|warning): (.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            }
+        },
+        {
+            "label": "INTAKE: run",
+            "type": "process",
+            "command": "${workspaceFolder}/bin/INTAKE.exe",
+            "args": [],
+            "dependsOn": "INTAKE: build",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "DD_INFILE": "${input:infile}",
+                    "DD_VALIDOUT": "out/VALID.DAT",
+                    "DD_REJECTOUT": "out/REJECT.DAT",
+                    "COB_LS_FIXED": "1"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "INTAKE: lint",
+            "type": "process",
+            "command": "python",
+            "args": [
+                "-I",
+                "../.claude/skills/ibmz-app-builder/scripts/zlint.py",
+                "src",
+                "cpy"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

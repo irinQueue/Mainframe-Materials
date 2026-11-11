@@ -1,0 +1,12 @@
+EMPPAY - WEEKLY PAYROLL REGISTER  (SAMPLE)          RUN DATE: 2026/11/06
+EMPID NAME                 DEPT   HRS     GROSS TYPE   TAX%       TAX       NET
+--------------------------------------------------------------------------------
+E1001 ALICE SAMPLE         ACCT  40.0  1,000.00    F   10.0    100.00    900.00
+E1002 BRUNO TESTER         ITSD  45.5  1,580.19    F   15.0    237.03  1,343.16
+E1003 CARLA EXAMPLE        OPS   22.0    407.00    P    8.0     32.56    374.44
+E1004 DIEGO DEMO           ITSD  52.0  2,784.00    F   22.0    612.48  2,171.52
+E1005 ELENA PLACEHOLDER        *** REJECTED - INVALID EMP-TYPE: X
+E1006 FRANK FICTIONAL      ACCT  30.0    457.50    P    8.0     36.60    420.90
+E1007 GRACE MOCKUP         OPS   40.0  2,800.00    F   22.0    616.00  2,184.00
+--------------------------------------------------------------------------------
+TOTALS READ:  7 PAID:  6 REJ:  1       9,028.69                        7,394.02

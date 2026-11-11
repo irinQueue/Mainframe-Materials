@@ -1,0 +1,19 @@
+{
+  "app": "Order Extract",
+  "prefix": "ORD",
+  "hlq": "USER01.ORD",
+  "copybooks": [
+    {"name": "ORDREC", "desc": "order record, 80 bytes", "fields": [
+      {"name": "ORD-ID", "pic": "9(8)", "comment": "order number"},
+      {"name": "ORD-CUST-ID", "pic": "X(10)"},
+      {"name": "ORD-AMOUNT", "pic": "S9(7)V99", "comp3": true},
+      {"name": "ORD-STATUS", "pic": "X(1)"},
+      {"name": "FILLER", "pic": "X(56)"}
+    ]}
+  ],
+  "programs": [
+    {"name": "ORDBAT1", "type": "batch", "desc": "daily order extract",
+     "inputs": [{"dd": "ORDIN", "copybook": "ORDREC", "recfm": "FB", "lrecl": 80}],
+     "outputs": [{"dd": "ORDOUT", "copybook": "ORDREC", "recfm": "FB", "lrecl": 80}]}
+  ]
+}

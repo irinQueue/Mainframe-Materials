@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Developer and Claude Code Workflow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a swimlane map (Developer / Gate / Claude Code across 7 phases) above a detail panel for the selected phase. */
+:root{
+  --bg:#f4f6f8; --surface:#ffffff; --surface-2:#eaeef2; --line:#cfd6de;
+  --fg:#17202a; --muted:#566373;
+  --dev:#2a5c8f; --dev-soft:#e3edf7;
+  --cc:#a65f00; --cc-soft:#fbefdc;
+  --gate:#1d7a45; --gate-soft:#e1f2e8;
+  --stop:#b3261e; --stop-soft:#fbe6e4;
+  --code-bg:#101820; --code-fg:#cfe8d6; --code-dim:#7f9a88;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",Segoe UI,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --surface:#161d25; --surface-2:#1d2630; --line:#2c3845;
+  --fg:#e3e9ef; --muted:#93a1b0;
+  --dev:#7fb0e3; --dev-soft:#1b2a3a;
+  --cc:#f0a640; --cc-soft:#2e2414;
+  --gate:#5fcf8c; --gate-soft:#15291e;
+  --stop:#f08b83; --stop-soft:#341a18;
+  --code-bg:#0a0f14; --code-fg:#cfe8d6; --code-dim:#7f9a88;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#161d25; --surface-2:#1d2630; --line:#2c3845;
+  --fg:#e3e9ef; --muted:#93a1b0;
+  --dev:#7fb0e3; --dev-soft:#1b2a3a;
+  --cc:#f0a640; --cc-soft:#2e2414;
+  --gate:#5fcf8c; --gate-soft:#15291e;
+  --stop:#f08b83; --stop-soft:#341a18;
+  --code-bg:#0a0f14; --code-fg:#cfe8d6; --code-dim:#7f9a88;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:28px}
+.wrap > *{min-width:0}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:68ch;margin:8px 0 0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:14px;font-size:14px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+.sw.dev{background:var(--dev)}.sw.cc{background:var(--cc)}.sw.gate{background:var(--gate);transform:rotate(45deg);width:11px;height:11px}
+
+/* Swimlane map */
+.map-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.map{display:grid;grid-template-columns:118px repeat(7,minmax(128px,1fr));min-width:1020px}
+.map .hdr{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding:10px 8px;border-bottom:1px solid var(--line);text-align:center}
+.map .hdr b{display:block;font-family:var(--f-display);font-size:15px;color:var(--fg);font-weight:600;margin-top:2px}
+.lane{font-family:var(--f-display);font-weight:600;font-size:14px;padding:12px 12px;display:flex;align-items:center;border-right:1px solid var(--line)}
+.lane.dev{color:var(--dev);background:var(--dev-soft)}
+.lane.gate{color:var(--gate);background:var(--gate-soft)}
+.lane.cc{color:var(--cc);background:var(--cc-soft)}
+.cell{padding:10px 8px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;min-height:74px;position:relative}
+.cell.row-cc{border-bottom:none}
+.col{cursor:pointer}
+.col.active{background:color-mix(in srgb,var(--surface-2) 70%,transparent)}
+.chip{font-size:13px;line-height:1.3;text-align:center;padding:7px 9px;border-radius:6px;border:1px solid;max-width:150px}
+.chip.dev{border-color:color-mix(in srgb,var(--dev) 45%,transparent);background:var(--dev-soft);color:var(--fg)}
+.chip.cc{border-color:color-mix(in srgb,var(--cc) 45%,transparent);background:var(--cc-soft);color:var(--fg)}
+.diamond{width:50px;height:50px;transform:rotate(45deg);border:2px solid var(--gate);background:var(--gate-soft);display:grid;place-items:center;border-radius:4px}
+.diamond span{transform:rotate(-45deg);font-family:var(--f-mono);font-size:10.5px;font-weight:600;color:var(--gate)}
+.diamond.none{border-style:dashed;border-color:var(--line);background:transparent}
+.diamond.none span{color:var(--muted)}
+.hdr.col.active{color:var(--fg)}
+.hdr.col.active b{color:var(--dev)}
+.map-note{font-size:13px;color:var(--muted);margin:8px 2px 0}
+
+/* Stepper */
+.stepper{display:flex;flex-wrap:wrap;gap:8px}
+.stepper button{font-family:var(--f-mono);font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.stepper button[aria-current="step"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.stepper button:focus-visible,.nav button:focus-visible,.copy:focus-visible,.col:focus-visible{outline:3px solid var(--dev);outline-offset:2px}
+
+/* Detail */
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:22px}
+.detail-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px}
+.detail-head h2{font-size:clamp(24px,3vw,32px);font-weight:700}
+.goal{color:var(--muted);margin:6px 0 0;max-width:72ch}
+.flow{display:grid;grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr);gap:0;align-items:stretch}
+.who{border-radius:10px;padding:16px 18px;min-width:0}
+.who h3{font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.who.dev{background:var(--dev-soft)}.who.dev h3{color:var(--dev)}
+.who.cc{background:var(--cc-soft)}.who.cc h3{color:var(--cc)}
+.who ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.handoff{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted)}
+.handoff svg{width:40px;height:40px}
+.handoff small{font-family:var(--f-mono);font-size:11px;text-align:center;line-height:1.3;max-width:88px}
+.gatebox{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pass,.fail{border-radius:10px;padding:14px 16px;border:1px solid}
+.pass{background:var(--gate-soft);border-color:color-mix(in srgb,var(--gate) 40%,transparent)}
+.fail{background:var(--stop-soft);border-color:color-mix(in srgb,var(--stop) 40%,transparent)}
+.pass h3{color:var(--gate)}.fail h3{color:var(--stop)}
+.pass h3,.fail h3{font-size:15px;font-weight:600;margin-bottom:6px;font-family:var(--f-display)}
+.pass p,.fail p{margin:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.two > div{min-width:0}
+.label{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.term{background:var(--code-bg);color:var(--code-fg);font-family:var(--f-mono);font-size:13.5px;line-height:1.5;border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin:0}
+.term .p{color:var(--code-dim)}
+.term .hl{color:#ffd27a}
+.copy{font-family:var(--f-mono);font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);cursor:pointer;text-transform:none;letter-spacing:0}
+.watch{border-left:0;background:var(--surface-2);border-radius:10px;padding:14px 16px}
+.watch h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.watch p{margin:0}
+.nav{display:flex;justify-content:space-between;gap:10px}
+.nav button{font-family:var(--f-display);font-weight:600;font-size:15px;padding:10px 18px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.nav button.primary{background:var(--dev);border-color:var(--dev);color:var(--bg)}
+.nav button:disabled{opacity:.4;cursor:default}
+.key{font-size:13px;color:var(--muted);text-align:center}
+kbd{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--surface)}
+footer{font-size:13px;color:var(--muted);max-width:80ch}
+
+@media (max-width:760px){
+  .flow{grid-template-columns:1fr}
+  .handoff{flex-direction:row;padding:10px 0;min-height:52px}
+  .handoff small{max-width:none}
+  .handoff svg{transform:rotate(90deg)}
+  .gatebox,.two{grid-template-columns:1fr}
+  .detail{padding:18px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .detail{transition:opacity .18s ease}
+  .detail.fading{opacity:.35}
+}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Module 3 · Governance · AI-assisted SDLC</div>
+    <h1>How a developer and Claude Code work a change together</h1>
+    <p class="lede">Seven phases, from opening the session to merging the change. Blue is what you do, amber is what Claude Code does, and every green gate must pass before work moves on. Click any phase, or use the arrow keys.</p>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw dev"></i>Developer</span>
+      <span><i class="sw gate"></i>Gate (human decides)</span>
+      <span><i class="sw cc"></i>Claude Code</span>
+    </div>
+  </header>
+
+  <section aria-label="Workflow map">
+    <div class="map-scroll">
+      <div class="map" id="map"></div>
+    </div>
+    <p class="map-note">Example change throughout: building the INTAKE program from the Firm-Producer Sync capstone. The Phase 3 and Phase 4 outputs come from a real Claude Code run; the others show the kind of answer to expect.</p>
+  </section>
+
+  <nav class="stepper" id="stepper" aria-label="Phases"></nav>
+
+  <section class="detail" id="detail" aria-live="polite"></section>
+
+  <div class="nav">
+    <button id="prev" type="button">&larr; Previous phase</button>
+    <button id="next" type="button" class="primary">Next phase &rarr;</button>
+  </div>
+  <p class="key">Keyboard: <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to move between phases.</p>
+
+  <footer>Nothing reaches the main branch without two human approvals: yours at the plan, and the tech lead's at review. Claude Code does the work in between, and every gate can send work back.</footer>
+</div>
+
+<script>
+const PHASES = [
+ { id:"setup", n:"0", name:"Session setup", short:"Setup",
+   dev:"Open the project, start Claude", gate:"", cc:"Load CLAUDE.md, report rules",
+   goal:"Start every piece of work from a clean, known state, so Claude works from the right folder and the right rules.",
+   devSteps:["Open a terminal in the project folder (for example C:\\Projects\\firm-producer-sync).","Start Claude Code and run /status to check the model, account and connection.","Ask Claude to read CLAUDE.md and summarise the rules."],
+   ccSteps:["Reads CLAUDE.md automatically at the start of the session.","Lists the project rules it will follow: compiler, fixed format, DD names, the Do NOTs.","Waits for the first real task."],
+   handoff:"rules confirmed",
+   pass:"Claude's summary matches your CLAUDE.md, and /status shows the right model and account.",
+   fail:"Wrong folder, wrong account, or rules missing. Fix CLAUDE.md or restart Claude in the project folder.",
+   prompt:"/status\nRead CLAUDE.md and summarise the project rules in five bullets. Do not change any files.",
+   example:"<span class='p'>●</span> Project rules from CLAUDE.md:\n- GnuCOBOL 3.2, fixed format, columns 8-72\n- Files by DD name, never hard-coded paths\n- Numbered paragraphs, no GO TO\n- FILE STATUS checked after every I/O, RC 12 on failure\n- <span class='hl'>Never edit the test data in data/</span>",
+   watch:"Starting Claude from the wrong folder. Everything then runs against the wrong files, and nothing tells you." },
+
+ { id:"score", n:"1", name:"Score the spec", short:"Score",
+   dev:"Write the spec", gate:"80+", cc:"Score the spec, list gaps",
+   goal:"Make sure the spec is clear enough that two different people would build the same thing from it.",
+   devSteps:["Write the spec: task, technical context, expected output, constraints, edge cases.","Ask Claude to score it with the spec-scorer skill.","Fix the gaps it finds, then score again."],
+   ccSteps:["Scores the spec out of 100 against the six spec sections.","Lists the three changes that would raise the score most.","Writes no code in this phase."],
+   handoff:"spec + score",
+   pass:"Score is 80 or more.",
+   fail:"Under 80: improve the spec and rescore. No code is written until it passes.",
+   prompt:"Use the spec-scorer skill to score specs/firm-producer-sync.md.\nShow the score out of 100 and the three changes that would raise it most.",
+   example:"<span class='p'>●</span> Score: 72 / 100\n\nTop 3 improvements:\n1. Edge cases: say what happens when the input file is empty.\n2. Constraints: give the return code if a WRITE fails.\n3. Output: define the exact layout of INTAKE.RPT.",
+   watch:"Accepting a low score because 'Claude will figure it out'. A vague spec gives a guessing plan, and guessing code." },
+
+ { id:"validate", n:"2", name:"Validate against the code", short:"Validate",
+   dev:"Confirm what is new", gate:"", cc:"Compare spec with existing code",
+   goal:"Find out what already exists, so nobody builds something twice or breaks something that works.",
+   devSteps:["Ask Claude to compare each requirement with the code in src/.","Check its classification against what you know of the system.","Correct anything it got wrong before planning."],
+   ccSteps:["Reads the spec and the existing programs.","Classifies every requirement as New, Partly done or Done.","Points out conflicts between the spec and the code."],
+   handoff:"requirements map",
+   pass:"Every requirement is classified, and you agree with the classification.",
+   fail:"A conflict between spec and code: decide which is right, update the spec, and go back to phase 1.",
+   prompt:"Compare each requirement in specs/firm-producer-sync.md with the code in src/.\nClassify each as New, Partly done or Done, in a table:\nRequirement | Status | Where in the code | Notes",
+   example:"<span class='p'>●</span> | Req | Status      | Where in the code         |\n| 1   | Done        | INTAKE 2000-PROCESS       |\n| 2   | New         | -                         |\n| 3   | Partly done | INTAKE has firms only     |\n| 4   | New         | -                         |",
+   watch:"Skipping this on 'small' changes. It is the cheapest way to find that a rule already exists in another program." },
+
+ { id:"plan", n:"3", name:"Plan and approve", short:"Plan",
+   dev:"Review, correct, approve", gate:"Approve", cc:"Write the plan in plan mode",
+   goal:"Agree exactly what will be built, step by step, before a single line of code is written. This is the most important gate.",
+   devSteps:["Switch to plan mode (Shift+Tab) and ask for a numbered plan.","Read it like a design walkthrough: wrong assumptions, missing steps, extra work.","Send corrections. Approve only when it is right."],
+   ccSteps:["Writes a numbered plan, each step tied to a requirement.","Lists its assumptions and open questions.","Changes nothing while in plan mode."],
+   handoff:"plan ⇄ corrections",
+   pass:"Every requirement has a step, no step lacks a requirement, and you have said 'Plan approved'.",
+   fail:"Wrong assumption found: send the correction and ask for the changed steps. Repeat until it is right.",
+   prompt:"Read specs/firm-producer-sync.md and CLAUDE.md. Plan INTAKE only:\nnumbered steps, each tied to a requirement number. No code yet.",
+   example:"<span class='p'>●</span> Assumptions to confirm\n- <span class='hl'>The TIN rule applies to both F and P records.</span>\n- Report: per-type and per-reason counts.\n- Test data: add new cases to data/DAILY-A1.DAT.\n\n<span class='p'>Real run. All three were wrong and caught here: firms have no TIN, the report has exactly five lines, and test data must not change.</span>",
+   watch:"Approving without changing anything. In the real run above, an unchecked plan would have rejected every firm." },
+
+ { id:"build", n:"4", name:"Build and test", short:"Build",
+   dev:"Review each diff", gate:"Tests", cc:"Code one step, compile, run",
+   goal:"Build in small steps, and prove each step works before the next one starts.",
+   devSteps:["Ask Claude to implement one plan step only.","Read the diff (/diff) and the test output.","Commit when it passes, then ask for the next step."],
+   ccSteps:["Changes only the files for that step.","Compiles with cobc and runs the checks.","If something fails, explains the cause, fixes it and runs again."],
+   handoff:"diff + test result",
+   pass:"It compiles, the checks pass, and the counts are right (for INTAKE on DAILY-A2: 11 read, 6 valid, 5 rejected).",
+   fail:"Wrong result: paste the error or the wrong output back to Claude. If the plan was wrong, go back to phase 3.",
+   prompt:"Plan approved. Implement step 1 only. Compile with cobc -x -o bin/INTAKE src/INTAKE.cbl, run it on data/DAILY-A2.DAT, and show me out/REJECT.DAT.",
+   example:"<span class='p'>$</span> ./bin/INTAKE data/DAILY-A2.DAT\nINTAKE RECORDS READ    : 0000011\nINTAKE RECORDS VALID   : 0000006\nINTAKE RECORDS REJECTED: 0000005\nreturn code: 0",
+   watch:"Asking for every step at once. When a count is wrong, you then cannot tell which change caused it." },
+
+ { id:"push", n:"5", name:"Push and open a PR", short:"Push",
+   dev:"Check and push", gate:"", cc:"Draft PR, label AI-assisted",
+   goal:"Package the change so a reviewer can see what changed, why, and how it was tested.",
+   devSteps:["Run /security-review before pushing.","Ask Claude to draft the pull request description.","Read it, correct it, then push the branch and open the PR."],
+   ccSteps:["Creates a feature branch and a clear commit message.","Drafts the PR description: requirements covered, files changed, test evidence.","Labels the PR as AI-assisted."],
+   handoff:"branch + PR draft",
+   pass:"Security review is clean, and the PR lists the requirements covered and the test results.",
+   fail:"A security finding, or a PR that doesn't match the spec: fix it in phase 4 first.",
+   prompt:"Create a branch named feature/intake and commit with a clear message.\nDraft a pull request description that lists the spec requirements covered and the test results. Label it AI-assisted.",
+   example:"<span class='p'>●</span> PR: INTAKE - producers, TIN rule, firm reference, control counts\nLabel: AI-assisted\nCovers: requirements 1-7\nTested: DAILY-A2 (11/6/5), DAILY-A1 (8/6/2), RC 0 on both",
+   watch:"Pushing straight to main. AI-assisted work always goes through a pull request." },
+
+ { id:"review", n:"6", name:"Human review and merge", short:"Review",
+   dev:"Tech lead reviews", gate:"Merge", cc:"First-pass review, apply fixes",
+   goal:"A person who did not write the change checks it before it reaches main. Claude can be wrong with full confidence; the reviewer is the last line of defence.",
+   devSteps:["The tech lead reads the PR, the diff and the test evidence.","Leaves comments, or approves and merges.","Patterns in the comments become new rules in CLAUDE.md."],
+   ccSteps:["Runs a first-pass review (/review) to catch obvious issues early.","Applies the reviewer's requested changes, one comment at a time.","Never merges anything itself."],
+   handoff:"comments ⇄ fixes",
+   pass:"The tech lead approves, and the change is merged to main.",
+   fail:"Review comments: back to phase 4 for the fix, then the PR is reviewed again.",
+   prompt:"/review\nThen: apply the reviewer's comment on 3200-CHECK-PRODUCER only.\nRun sh verify/check.sh and show the result.",
+   example:"<span class='p'>●</span> Review of INTAKE.cbl\n- OK: FILE STATUS checked after every OPEN and WRITE\n- OK: reject record cleared before each WRITE\n- Check: firm table has no overflow test above 500 entries",
+   watch:"Treating Claude's /review as the approval. It is a first pass only. A human always merges." }
+];
+
+const map = document.getElementById('map');
+const stepper = document.getElementById('stepper');
+const detail = document.getElementById('detail');
+let cur = 0;
+
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+
+function buildMap(){
+  let h = '<div class="hdr"></div>';
+  PHASES.forEach((p,i)=>{ h += `<div class="hdr col" data-i="${i}" role="button" tabindex="0" aria-label="Phase ${p.n}: ${p.name}">Phase ${p.n}<b>${p.short}</b></div>`; });
+  h += '<div class="lane dev">Developer</div>';
+  PHASES.forEach((p,i)=>{ h += `<div class="cell col" data-i="${i}"><div class="chip dev">${esc(p.dev)}</div></div>`; });
+  h += '<div class="lane gate">Gate</div>';
+  PHASES.forEach((p,i)=>{ h += `<div class="cell col" data-i="${i}">${p.gate?`<div class="diamond" title="Gate: ${esc(p.gate)}"><span>${esc(p.gate)}</span></div>`:`<div class="diamond none" title="Check, no formal gate"><span>check</span></div>`}</div>`; });
+  h += '<div class="lane cc">Claude Code</div>';
+  PHASES.forEach((p,i)=>{ h += `<div class="cell col row-cc" data-i="${i}"><div class="chip cc">${esc(p.cc)}</div></div>`; });
+  map.innerHTML = h;
+  map.querySelectorAll('.col').forEach(el=>{
+    el.addEventListener('click',()=>go(+el.dataset.i));
+    el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();go(+el.dataset.i);} });
+  });
+  stepper.innerHTML = PHASES.map((p,i)=>`<button type="button" data-i="${i}">${p.n} · ${p.short}</button>`).join('');
+  stepper.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.i)));
+}
+
+const arrow = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 14h26l-6-6M36 26H10l6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function render(){
+  const p = PHASES[cur];
+  detail.innerHTML = `
+    <div>
+      <div class="detail-head">
+        <div><div class="eyebrow">Phase ${p.n} of 6</div><h2>${p.name}</h2></div>
+        ${p.gate?`<div class="eyebrow" style="color:var(--gate)">Gate: ${esc(p.gate)}</div>`:`<div class="eyebrow">Check before moving on</div>`}
+      </div>
+      <p class="goal">${p.goal}</p>
+    </div>
+    <div class="flow">
+      <div class="who dev"><h3>Developer does</h3><ol>${p.devSteps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>
+      <div class="handoff">${arrow}<small>${esc(p.handoff)}</small></div>
+      <div class="who cc"><h3>Claude Code does</h3><ol>${p.ccSteps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>
+    </div>
+    <div class="gatebox">
+      <div class="pass"><h3>Move on when</h3><p>${esc(p.pass)}</p></div>
+      <div class="fail"><h3>If not</h3><p>${esc(p.fail)}</p></div>
+    </div>
+    <div class="two">
+      <div><div class="label">Prompt to type <button class="copy" type="button" id="copy">Copy</button></div><pre class="term" id="prompt">${esc(p.prompt)}</pre></div>
+      <div><div class="label">What comes back (example)</div><pre class="term">${p.example}</pre></div>
+    </div>
+    <div class="watch"><h3>Watch for</h3><p>${esc(p.watch)}</p></div>`;
+  document.getElementById('copy').addEventListener('click',e=>{
+    const btn=e.currentTarget, txt=p.prompt;
+    const done=()=>{btn.textContent='Copied';setTimeout(()=>btn.textContent='Copy',1500)};
+    try{ navigator.clipboard.writeText(txt).then(done,()=>selectPrompt(btn)); }catch(_){ selectPrompt(btn); }
+  });
+  map.querySelectorAll('.col').forEach(el=>el.classList.toggle('active',+el.dataset.i===cur));
+  stepper.querySelectorAll('button').forEach(b=>{ if(+b.dataset.i===cur) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current'); });
+  document.getElementById('prev').disabled = cur===0;
+  const nx=document.getElementById('next'); nx.disabled = cur===PHASES.length-1;
+  nx.innerHTML = cur===PHASES.length-1 ? 'Merged' : `Next: ${PHASES[cur+1].short} &rarr;`;
+}
+function selectPrompt(btn){const r=document.createRange();r.selectNodeContents(document.getElementById('prompt'));const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Selected: press Ctrl+C';setTimeout(()=>btn.textContent='Copy',2000)}
+
+function go(i, fromHash){
+  if(i<0||i>=PHASES.length) return;
+  cur=i;
+  detail.classList.add('fading');
+  setTimeout(()=>{render();detail.classList.remove('fading')}, 90);
+  if(!fromHash){ try{ history.replaceState(null,'','#'+PHASES[i].id); }catch(_){ } }
+}
+document.getElementById('prev').addEventListener('click',()=>go(cur-1));
+document.getElementById('next').addEventListener('click',()=>go(cur+1));
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea')) return;
+  if(e.key==='ArrowRight') go(cur+1);
+  if(e.key==='ArrowLeft') go(cur-1);
+});
+function fromHash(){ const h=location.hash.slice(1); const i=PHASES.findIndex(p=>p.id===h); return i<0?0:i; }
+window.addEventListener('hashchange',()=>go(fromHash(),true));
+
+buildMap();
+cur = fromHash();
+render();
+</script>
+
+</body>
+</html>

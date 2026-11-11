@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Session Reader</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+  body { min-height: 100vh; }
+  .brand-mark { width: 2rem; height: 2rem; display: inline-grid; place-items: center; border-radius: .5rem;
+    background: var(--bs-primary); color: #fff; }
+  .drop-zone { border: 2px dashed var(--bs-border-color); background: var(--bs-tertiary-bg);
+    transition: border-color .15s ease, background-color .15s ease; }
+  .drop-zone.dragover { border-color: var(--bs-primary); background: var(--bs-primary-bg-subtle); }
+  .kpi .value { font-size: 1.35rem; font-weight: 600; line-height: 1.2; }
+  .kpi .value.small-value { font-size: .95rem; font-weight: 500; }
+  .kpi .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--bs-secondary-color); }
+  .bubble-user { max-width: 82%; background: var(--bs-primary-bg-subtle); border: 1px solid var(--bs-primary-border-subtle);
+    border-radius: 1rem 1rem .25rem 1rem; }
+  .bubble-ai { max-width: 100%; border-radius: 1rem 1rem 1rem .25rem; }
+  .prose { white-space: pre-wrap; word-break: break-word; }
+  .code-block { max-height: 420px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+    background: var(--bs-tertiary-bg); font-size: .8rem; margin: 0; }
+  .accent-tool { border-left: 3px solid var(--bs-warning); }
+  .accent-result { border-left: 3px solid var(--bs-success); }
+  .accent-error { border-left: 3px solid var(--bs-danger); }
+  .accent-think { border-left: 3px solid var(--bs-info); }
+  details > summary { cursor: pointer; list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before { content: "\F285"; font-family: "bootstrap-icons"; display: inline-block;
+    margin-right: .35rem; font-size: .7rem; transition: transform .15s ease; color: var(--bs-secondary-color); }
+  details[open] > summary::before { transform: rotate(90deg); }
+  .htmlframe { display: block; width: 100%; height: 460px; min-height: 200px; background: #fff; resize: vertical; }
+  .nav-prompt { white-space: normal; }
+  .clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .turn-note { font-size: .85rem; }
+  .meta-row th { width: 14rem; font-weight: 500; color: var(--bs-secondary-color); }
+  @media (min-width: 992px) {
+    #navPanel { position: sticky !important; top: 57px; height: calc(100vh - 57px);
+      display: flex !important; flex-direction: column; visibility: visible !important; }
+    #navPanel .offcanvas-body { display: flex !important; flex-direction: column; flex: 1 1 auto;
+      min-height: 0; padding: 0; overflow: hidden; }
+    #navPanel .nav-scroll { flex: 1 1 auto; min-height: 0; }
+  }
+  .nav-scroll { overflow-y: auto; max-height: calc(100vh - 57px - 3.5rem); }
+  .offcanvas-body .nav-scroll { width: 100%; }
+  @media (max-width: 991.98px) {
+    .nav-scroll { max-height: none; }
+  }
+</style>
+</head>
+<body class="bg-body-tertiary">
+
+<nav class="navbar navbar-expand bg-body border-bottom sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="#">
+      <span class="brand-mark"><i class="bi bi-chat-square-text"></i></span>
+      <span>Session Reader</span>
+    </a>
+    <div class="d-flex align-items-center gap-2 ms-auto">
+      <button class="btn btn-sm btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#navPanel" aria-controls="navPanel">
+        <i class="bi bi-list-ul"></i> <span class="d-none d-sm-inline">Prompts</span>
+      </button>
+      <button class="btn btn-sm btn-primary" type="button" id="openBtn">
+        <i class="bi bi-folder2-open"></i> Open session
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" type="button" id="themeBtn" aria-label="Toggle light and dark theme" title="Toggle theme">
+        <i class="bi bi-moon-stars" id="themeIcon"></i>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-0">
+  <div class="row g-0">
+
+    <!-- Sidebar: static on large screens, off-canvas below -->
+    <aside class="col-lg-3 col-xl-2">
+      <div class="offcanvas-lg offcanvas-start bg-body border-end h-100" tabindex="-1" id="navPanel" aria-label="Your prompts">
+        <div class="offcanvas-header d-lg-none border-bottom">
+          <h2 class="offcanvas-title fs-6 fw-semibold">Your prompts</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom d-none d-lg-flex">
+            <span class="small text-uppercase fw-semibold text-secondary">Your prompts</span>
+            <span class="badge text-bg-secondary" id="navCount">0</span>
+          </div>
+          <div class="nav-scroll">
+            <div class="list-group list-group-flush" id="nav">
+              <div class="p-3 small text-secondary">Open a session to see its prompts.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main workspace -->
+    <main class="col-lg-9 col-xl-10 p-3 p-lg-4">
+
+      <!-- Empty state -->
+      <section id="empty" class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-chat-square-dots display-5 text-primary"></i>
+          <h2 class="h4 mt-3">No session open</h2>
+          <p class="text-secondary mb-4">Open a Claude Code <code>.jsonl</code> session file to read it as a conversation.<br>Everything is processed in your browser; nothing is uploaded.</p>
+          <button class="btn btn-primary" type="button" data-open-modal><i class="bi bi-folder2-open"></i> Open session</button>
+        </div>
+      </section>
+
+      <!-- Workspace (shown after a session loads) -->
+      <section id="workspace" class="d-none">
+        <header class="mb-3">
+          <h1 class="h4 mb-1 text-break" id="sessionTitle">Session</h1>
+          <div class="small text-secondary text-break" id="sessionSub"></div>
+        </header>
+
+        <div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3 mb-3">
+          <div class="col"><div class="card h-100 kpi shadow-sm"><div class="card-body"><div class="label">Prompts</div><div class="value" id="kPrompts">0</div></div></div></div>
+          <div class="col"><div class="card h-100 kpi shadow-sm"><div class="card-body"><div class="label">Replies</div><div class="value" id="kReplies">0</div></div></div></div>
+          <div class="col"><div class="card h-100 kpi shadow-sm"><div class="card-body"><div class="label">Tool turns</div><div class="value" id="kTools">0</div></div></div></div>
+          <div class="col"><div class="card h-100 kpi shadow-sm"><div class="card-body"><div class="label">Duration</div><div class="value" id="kDuration">—</div></div></div></div>
+          <div class="col"><div class="card h-100 kpi shadow-sm"><div class="card-body"><div class="label">Tool errors</div><div class="value" id="kErrors">0</div></div></div></div>
+          <div class="col"><div class="card h-100 kpi shadow-sm"><div class="card-body"><div class="label">Model</div><div class="value small-value text-truncate" id="kModels">—</div></div></div></div>
+        </div>
+
+        <div class="accordion mb-3 shadow-sm" id="detailsAcc">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#detailsBody" aria-expanded="false" aria-controls="detailsBody">
+                Session details
+              </button>
+            </h2>
+            <div id="detailsBody" class="accordion-collapse collapse" data-bs-parent="#detailsAcc">
+              <div class="accordion-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-sm mb-0 align-middle">
+                    <tbody id="detailRows"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card shadow-sm mb-3">
+          <div class="card-body py-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <div class="btn-group btn-group-sm" role="group" aria-label="Filter messages" id="filters">
+                <button type="button" class="btn btn-outline-primary active" data-filter="all">All</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="prompts">Your prompts</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="replies">Claude replies</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="tools">With tools</button>
+              </div>
+              <div class="input-group input-group-sm" style="width:min(320px,100%)">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" id="q" placeholder="Search messages (press /)" aria-label="Search messages">
+              </div>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Expand or collapse">
+                <button type="button" class="btn btn-outline-secondary" id="expandBtn"><i class="bi bi-arrows-expand"></i> Expand</button>
+                <button type="button" class="btn btn-outline-secondary" id="collapseBtn"><i class="bi bi-arrows-collapse"></i> Collapse</button>
+              </div>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="showSystem">
+                <label class="form-check-label small" for="showSystem">System &amp; hook events</label>
+              </div>
+              <div class="form-check form-switch mb-0" title="Previews are sandboxed. Turn on only for content you trust.">
+                <input class="form-check-input" type="checkbox" role="switch" id="runScripts">
+                <label class="form-check-label small" for="runScripts">Run scripts in previews</label>
+              </div>
+              <span class="small text-secondary ms-auto" id="stat"></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="list" class="d-flex flex-column gap-3"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Open-session dialog -->
+<div class="modal fade" id="openModal" tabindex="-1" aria-labelledby="openModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="openModalTitle">Open a session</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="drop" class="drop-zone rounded-3 p-4 text-center mb-3">
+          <i class="bi bi-file-earmark-code display-6 text-secondary"></i>
+          <p class="mb-2 mt-2">Drop a session <code>.jsonl</code> file here</p>
+          <label class="btn btn-outline-primary btn-sm mb-0">
+            <i class="bi bi-upload"></i> Choose file
+            <input type="file" id="file" accept=".jsonl,.txt,.json" class="visually-hidden">
+          </label>
+        </div>
+
+        <label for="paste" class="form-label fw-semibold">Or paste the file contents</label>
+        <textarea id="paste" class="form-control font-monospace small" rows="7" placeholder="Paste the contents of a .jsonl session file here."></textarea>
+        <div class="form-text">
+          A session ID alone can't be opened: this page can't read your computer's files. Find the matching
+          <code>&lt;session-id&gt;.jsonl</code> in <code>~/.claude/projects/&lt;project folder&gt;/</code> (Windows: <code>%USERPROFILE%\.claude\projects\</code>).
+        </div>
+        <div id="msg" class="mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" id="clearBtn">Clear</button>
+        <button type="button" class="btn btn-primary" id="openPaste"><i class="bi bi-check2"></i> Open</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toasts" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var LIMIT = 20000;
+  var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { turns: [], meta: null, filter: "all" };
+  var modalEl = $("openModal");
+  var modal = window.bootstrap ? new bootstrap.Modal(modalEl) : null;
+
+  /* ---------- helpers (textContent only: transcript data is never parsed as HTML) ---------- */
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (k === "class") n.className = attrs[k];
+        else if (k === "text") n.textContent = attrs[k];
+        else n.setAttribute(k, attrs[k]);
+      }
+    }
+    (kids || []).forEach(function (c) {
+      if (c === null || c === undefined) return;
+      n.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    });
+    return n;
+  }
+  function icon(name) { return el("i", { class: "bi bi-" + name + " me-1" }); }
+  function fmtTime(ts) {
+    if (!ts) return "";
+    var d = new Date(ts);
+    return isNaN(d) ? String(ts) : d.toLocaleString();
+  }
+  function duration(a, b) {
+    var ms = new Date(b) - new Date(a);
+    if (!a || !b || isNaN(ms) || ms < 0) return "—";
+    var m = Math.round(ms / 60000), h = Math.floor(m / 60), r = m % 60;
+    return (h ? h + " h " : "") + r + " min";
+  }
+  function oneLine(s, n) {
+    s = String(s || "").replace(/\s+/g, " ").trim();
+    return s.length > n ? s.slice(0, n) + "…" : s;
+  }
+  function setText(id, v) { $(id).textContent = v; }
+  function notice(text, kind) {
+    var box = $("msg");
+    box.textContent = "";
+    if (!text) return;
+    box.appendChild(el("div", { class: "alert alert-" + (kind || "info") + " py-2 mb-0 small", role: "alert", text: text }));
+  }
+  function toast(text, kind) {
+    var box = $("toasts");
+    var t = el("div", { class: "toast align-items-center text-bg-" + (kind || "dark") + " border-0", role: "status", "aria-atomic": "true" }, [
+      el("div", { class: "d-flex" }, [
+        el("div", { class: "toast-body", text: text }),
+        el("button", { type: "button", class: "btn-close btn-close-white me-2 m-auto", "data-bs-dismiss": "toast", "aria-label": "Close" })
+      ])
+    ]);
+    box.appendChild(t);
+    t.addEventListener("hidden.bs.toast", function () { t.remove(); });
+    if (window.bootstrap) { new bootstrap.Toast(t, { delay: 3200 }).show(); }
+    else { setTimeout(function () { t.remove(); }, 3200); }
+  }
+  function copyText(text) {
+    function fallback() {
+      var ta = el("textarea", { style: "position:fixed;opacity:0" });
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      ta.remove();
+      toast(ok ? "Copied to clipboard" : "Copy failed. Select the text and copy it manually.", ok ? "success" : "danger");
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast("Copied to clipboard", "success"); }, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  /* ---------- rendering pieces ---------- */
+  function codeBlock(text, label) {
+    var truncated = text.length > LIMIT;
+    var pre = el("pre", { class: "code-block rounded p-2" });
+    pre.textContent = truncated
+      ? text.slice(0, LIMIT) + "\n\n… showing first " + LIMIT.toLocaleString() + " of " + text.length.toLocaleString() + " characters"
+      : text;
+    var copy = el("button", { type: "button", class: "btn btn-sm btn-outline-secondary" }, [icon("clipboard"), "Copy"]);
+    copy.addEventListener("click", function () { copyText(text); });
+    var actions = [copy];
+    if (truncated) {
+      var more = el("button", { type: "button", class: "btn btn-sm btn-outline-secondary" }, [
+        icon("arrows-angle-expand"), "Show all " + text.length.toLocaleString() + " chars"
+      ]);
+      more.addEventListener("click", function () { pre.textContent = text; more.remove(); });
+      actions.push(more);
+    }
+    return el("div", { class: "my-2" }, [
+      pre,
+      el("div", { class: "d-flex justify-content-between align-items-center gap-2 mt-1" }, [
+        el("span", { class: "small text-secondary", text: label || "" }),
+        el("div", { class: "d-flex gap-1" }, actions)
+      ])
+    ]);
+  }
+  function resultText(c) {
+    if (c === null || c === undefined) return "";
+    if (typeof c === "string") return c;
+    if (!Array.isArray(c)) return JSON.stringify(c, null, 2);
+    return c.map(function (b) {
+      if (b && b.type === "text") return b.text || "";
+      if (b && b.type === "image") return "[image]";
+      return JSON.stringify(b, null, 2);
+    }).join("\n");
+  }
+  function summarize(input) {
+    input = input || {};
+    var pick = input.command || input.file_path || input.path || input.pattern || input.description ||
+               input.url || input.query || input.skill || input.prompt;
+    return oneLine(pick ? String(pick) : Object.keys(input).slice(0, 3).join(", "), 140);
+  }
+  function runScripts() { return $("runScripts").checked; }
+  function looksLikeHtml(s) {
+    return /^\s*(<!doctype html|<html[\s>]|<head[\s>]|<body[\s>]|<style[\s>]|<!--)/i.test(s);
+  }
+
+  // Sandboxed HTML preview with source view and download. No allow-same-origin: the page cannot reach this app or the user's data.
+  function htmlBlock(src) {
+    var frame = el("iframe", { class: "htmlframe border rounded", title: "HTML preview", referrerpolicy: "no-referrer" });
+    frame.setAttribute("sandbox", runScripts() ? "allow-scripts" : "");
+    frame.srcdoc = src;
+    var code = codeBlock(src, "HTML source");
+    code.classList.add("d-none");
+    var pv = el("button", { type: "button", class: "btn btn-sm btn-primary" }, [icon("eye"), "Preview"]);
+    var sc = el("button", { type: "button", class: "btn btn-sm btn-outline-primary" }, [icon("code-slash"), "Source"]);
+    var dl = el("button", { type: "button", class: "btn btn-sm btn-outline-secondary" }, [icon("download"), "Download .html"]);
+    function show(which) {
+      var isPv = which === "preview";
+      frame.classList.toggle("d-none", !isPv);
+      code.classList.toggle("d-none", isPv);
+      pv.className = "btn btn-sm " + (isPv ? "btn-primary" : "btn-outline-primary");
+      sc.className = "btn btn-sm " + (isPv ? "btn-outline-primary" : "btn-primary");
+    }
+    pv.addEventListener("click", function () { show("preview"); });
+    sc.addEventListener("click", function () { show("source"); });
+    dl.addEventListener("click", function () {
+      var url = URL.createObjectURL(new Blob([src], { type: "text/html" }));
+      var a = el("a", { href: url, download: "claude-html-" + Date.now() + ".html" });
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+    });
+    return el("div", { class: "htmlbox border rounded-3 p-2 my-2 bg-body" }, [
+      el("div", { class: "d-flex flex-wrap align-items-center gap-2 mb-2" }, [
+        pv, sc, dl,
+        el("span", { class: "small text-secondary ms-auto", text: "HTML · " + src.length.toLocaleString() + " chars" })
+      ]),
+      frame,
+      code,
+      el("div", { class: "form-text mt-1", text: runScripts()
+        ? "Scripts allowed. The preview is sandboxed and cannot reach this app or your files."
+        : "Scripts are off. Turn on “Run scripts in previews” in the toolbar to allow them." })
+    ]);
+  }
+
+  // Splits a reply into prose, code blocks and HTML previews.
+  function renderRichText(text) {
+    var out = el("div", { class: "prose" });
+    if (looksLikeHtml(text)) { out.appendChild(htmlBlock(text)); return out; }
+    var re = /```([\w-]*)[ \t]*\r?\n([\s\S]*?)```/g;
+    var last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+      var before = text.slice(last, m.index);
+      if (before.trim()) out.appendChild(el("div", { class: "prose" }, [before.replace(/\s+$/, "")]));
+      var lang = (m[1] || "").toLowerCase(), body = m[2];
+      if (lang === "html" || lang === "htm" || (!lang && looksLikeHtml(body))) {
+        out.appendChild(htmlBlock(body));
+      } else {
+        out.appendChild(el("div", { class: "my-2" }, [
+          el("div", { class: "small text-uppercase fw-semibold text-secondary", text: lang || "code" }),
+          codeBlock(body)
+        ]));
+      }
+      last = re.lastIndex;
+    }
+    var rest = text.slice(last);
+    if (rest.trim()) out.appendChild(el("div", { class: "prose" }, [rest.replace(/^\s+/, "")]));
+    return out;
+  }
+  function renderToolUse(b) {
+    return el("details", { class: "accent-tool ps-2 my-2" }, [
+      el("summary", { class: "small py-1" }, [
+        el("i", { class: "bi bi-wrench-adjustable text-warning me-1" }),
+        el("span", { class: "fw-semibold", text: b.name || "tool" }), " ",
+        el("span", { class: "text-secondary", text: summarize(b.input) })
+      ]),
+      codeBlock(JSON.stringify(b.input == null ? {} : b.input, null, 2), "Input")
+    ]);
+  }
+  function renderToolResult(b) {
+    var txt = resultText(b.content);
+    var err = !!b.is_error;
+    return el("details", { class: (err ? "accent-error" : "accent-result") + " ps-2 my-2" }, [
+      el("summary", { class: "small py-1" }, [
+        el("i", { class: "bi " + (err ? "bi-x-octagon text-danger" : "bi-check2-circle text-success") + " me-1" }),
+        el("span", { class: "fw-semibold", text: err ? "Tool error" : "Tool result" }),
+        el("span", { class: "text-secondary ms-2", text: txt.length.toLocaleString() + " chars" })
+      ]),
+      codeBlock(txt, "Output")
+    ]);
+  }
+  function renderBlockBase(b) {
+    switch (b.type) {
+      case "text": return renderRichText(b.text || "");
+      case "thinking":
+        return el("details", { class: "accent-think ps-2 my-2" }, [
+          el("summary", { class: "small py-1 text-secondary", text: "Thinking" }),
+          el("div", { class: "prose small text-secondary mt-1", text: b.thinking || "" })
+        ]);
+      case "tool_use": return renderToolUse(b);
+      case "tool_result": return renderToolResult(b);
+      case "image": return el("div", { class: "small text-secondary", text: "[image]" });
+      default:
+        return el("details", { class: "small text-secondary my-2" }, [
+          el("summary", { text: "Block: " + (b.type || "unknown") }),
+          codeBlock(JSON.stringify(b, null, 2))
+        ]);
+    }
+  }
+  // A Write/Edit-style tool call that saves an .html file also gets a preview.
+  function renderBlock(b) {
+    if (b.type === "tool_use" && b.input && typeof b.input.content === "string" &&
+        /\.html?$/i.test(b.input.file_path || "")) {
+      return el("div", null, [renderBlockBase(b), htmlBlock(b.input.content)]);
+    }
+    return renderBlockBase(b);
+  }
+
+  function renderTurn(t) {
+    var art;
+    if (t.role === "note") {
+      art = el("div", { class: "turn turn-note text-secondary", id: t.id }, [
+        el("details", null, [
+          el("summary", { class: "small", text: t.label + " · " + fmtTime(t.ts) }),
+          codeBlock(t.body)
+        ])
+      ]);
+      art.dataset.kind = "note";
+      art.dataset.tools = "0";
+      return art;
+    }
+    var isUser = t.role === "user";
+    var kind = isUser ? (t.hasText ? "prompt" : "toolres") : (t.hasText ? "reply" : "toolres");
+    var blocks = t.blocks.map(function (b) { return renderBlock(b); });
+    var body;
+    if (isUser && t.hasText) {
+      body = el("div", { class: "d-flex justify-content-end" }, [
+        el("div", { class: "bubble-user p-3" }, [
+          el("div", { class: "d-flex justify-content-between gap-3 small mb-1" }, [
+            el("span", { class: "fw-semibold text-primary", text: "You" }),
+            el("span", { class: "text-secondary", text: fmtTime(t.ts) })
+          ])
+        ].concat(blocks))
+      ]);
+    } else if (!isUser) {
+      var meta = [fmtTime(t.ts), t.model].filter(Boolean).join(" · ");
+      body = el("div", { class: "d-flex" }, [
+        el("div", { class: "bubble-ai card shadow-sm w-100" }, [
+          el("div", { class: "card-body py-2 px-3" }, [
+            el("div", { class: "d-flex justify-content-between gap-3 small mb-1" }, [
+              el("span", { class: "fw-semibold", text: "Claude" }),
+              el("span", { class: "text-secondary", text: meta })
+            ])
+          ].concat(blocks))
+        ])
+      ]);
+    } else {
+      body = el("div", { class: "ps-3 border-start border-2 ms-3" }, [
+        el("div", { class: "small text-secondary mb-1", text: "Tool results returned to Claude" })
+      ].concat(blocks));
+    }
+    art = el("div", { class: "turn", id: t.id }, [body]);
+    art.dataset.kind = kind;
+    art.dataset.tools = t.hasTool ? "1" : "0";
+    return art;
+  }
+
+  function renderNav() {
+    var nav = $("nav");
+    nav.textContent = "";
+    var prompts = state.turns.filter(function (t) { return t.role === "user" && t.hasText; });
+    setText("navCount", prompts.length);
+    if (!prompts.length) {
+      nav.appendChild(el("div", { class: "p-3 small text-secondary", text: "No typed prompts in this session." }));
+      return;
+    }
+    prompts.forEach(function (t, i) {
+      var first = t.blocks.filter(function (b) { return b.type === "text" && (b.text || "").trim(); })[0];
+      var item = el("button", { type: "button", class: "list-group-item list-group-item-action py-2" }, [
+        el("div", { class: "small text-secondary", text: "#" + (i + 1) + " · " + fmtTime(t.ts) }),
+        el("div", { class: "small clamp-2 nav-prompt", text: oneLine(first ? first.text : "", 200) })
+      ]);
+      item.addEventListener("click", function () {
+        if (state.filter !== "all") setFilter("all");
+        var target = $(t.id);
+        if (target) {
+          if (target.classList.contains("d-none")) target.classList.remove("d-none");
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        var oc = window.bootstrap && bootstrap.Offcanvas.getInstance($("navPanel"));
+        if (oc) oc.hide();
+      });
+      nav.appendChild(item);
+    });
+  }
+
+  function renderList() {
+    var list = $("list");
+    list.textContent = "";
+    var show = state.turns.filter(function (t) { return t.role !== "note" || $("showSystem").checked; });
+    show.forEach(function (t) { list.appendChild(renderTurn(t)); });
+    if (!show.length) {
+      list.appendChild(el("div", { class: "card border-0 shadow-sm" }, [
+        el("div", { class: "card-body text-center text-secondary py-5", text: "No messages in this file." })
+      ]));
+    }
+    applyFilters();
+  }
+
+  function applyFilters() {
+    var term = $("q").value.trim().toLowerCase();
+    var f = state.filter, shown = 0, total = 0;
+    document.querySelectorAll("#list > .turn").forEach(function (a) {
+      total++;
+      var k = a.dataset.kind, ok = true;
+      if (f === "prompts") ok = k === "prompt";
+      else if (f === "replies") ok = k === "reply";
+      else if (f === "tools") ok = a.dataset.tools === "1";
+      if (ok && term) ok = a.textContent.toLowerCase().indexOf(term) !== -1;
+      a.classList.toggle("d-none", !ok);
+      if (ok) shown++;
+    });
+    $("stat").textContent = state.turns.length ? shown + " of " + total + " messages shown" : "";
+  }
+
+  function setFilter(f) {
+    state.filter = f;
+    document.querySelectorAll("#filters [data-filter]").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-filter") === f);
+    });
+    applyFilters();
+  }
+
+  function renderHeader(meta, counts) {
+    var title = meta.title || "Claude Code session";
+    setText("sessionTitle", title);
+    document.title = title + " · Session Reader";
+    $("sessionSub").textContent = [meta.cwd, meta.branch ? "branch " + meta.branch : ""].filter(Boolean).join(" · ");
+    setText("kPrompts", counts.prompts);
+    setText("kReplies", counts.replies);
+    setText("kTools", counts.tools);
+    setText("kDuration", duration(meta.first, meta.last));
+    setText("kErrors", meta.errors);
+    setText("kModels", meta.models.length ? meta.models.join(", ") : "—");
+    $("kModels").title = meta.models.join(", ");
+
+    var rows = $("detailRows");
+    rows.textContent = "";
+    var pairs = [
+      ["Session ID", meta.sessionId || "not found in file", meta.sessionId],
+      ["Project folder", meta.cwd || "—"],
+      ["Claude Code version", meta.version || "—"],
+      ["Git branch", meta.branch || "—"],
+      ["Started", fmtTime(meta.first) || "—"],
+      ["Last activity", fmtTime(meta.last) || "—"],
+      ["Tool errors", String(meta.errors)],
+      ["Unreadable lines skipped", String(meta.bad)]
+    ];
+    pairs.forEach(function (p) {
+      var val = el("td");
+      if (p[2]) {
+        var copy = el("button", { type: "button", class: "btn btn-sm btn-outline-secondary py-0 ms-2" }, [icon("clipboard"), "Copy"]);
+        copy.addEventListener("click", function () { copyText(p[2]); });
+        val.appendChild(el("code", { class: "text-break", text: p[1] }));
+        val.appendChild(copy);
+      } else {
+        val.textContent = p[1];
+      }
+      rows.appendChild(el("tr", { class: "meta-row" }, [el("th", { text: p[0] }), val]));
+    });
+  }
+
+  /* ---------- parsing ---------- */
+  function parseJsonl(text) {
+    var events = [], bad = 0;
+    text.split(/\r?\n/).forEach(function (line) {
+      var s = line.trim();
+      if (!s) return;
+      try { events.push(JSON.parse(s)); } catch (e) { bad++; }
+    });
+    return { events: events, bad: bad };
+  }
+
+  function buildModel(events) {
+    var turns = [];
+    var meta = { sessionId: "", cwd: "", version: "", branch: "", title: "", first: "", last: "",
+                 models: [], errors: 0, bad: 0 };
+    var seenModel = {};
+    var counts = { prompts: 0, replies: 0, tools: 0 };
+    var idx = 0;
+    events.forEach(function (e) {
+      if (!e || typeof e !== "object") return;
+      if (!meta.sessionId && e.sessionId) meta.sessionId = e.sessionId;
+      if (!meta.cwd && e.cwd) meta.cwd = e.cwd;
+      if (!meta.version && e.version) meta.version = e.version;
+      if (!meta.branch && e.gitBranch) meta.branch = e.gitBranch;
+      if (e.type === "ai-title" && e.aiTitle) meta.title = e.aiTitle;
+      if (e.timestamp) {
+        if (!meta.first || e.timestamp < meta.first) meta.first = e.timestamp;
+        if (!meta.last || e.timestamp > meta.last) meta.last = e.timestamp;
+      }
+      if (e.type === "user" || e.type === "assistant") {
+        var msg = e.message || {};
+        var role = msg.role || e.type;
+        var blocks = typeof msg.content === "string"
+          ? [{ type: "text", text: msg.content }]
+          : (Array.isArray(msg.content) ? msg.content : []);
+        var hasText = blocks.some(function (b) { return b && b.type === "text" && (b.text || "").trim(); });
+        var hasTool = blocks.some(function (b) { return b && (b.type === "tool_use" || b.type === "tool_result"); });
+        if (msg.model && !seenModel[msg.model]) { seenModel[msg.model] = true; meta.models.push(msg.model); }
+        blocks.forEach(function (b) { if (b && b.type === "tool_result" && b.is_error) meta.errors++; });
+        if (role === "user" && hasText) counts.prompts++;
+        if (role === "assistant" && hasText) counts.replies++;
+        if (hasTool) counts.tools++;
+        turns.push({ id: "m" + (idx++), role: role, ts: e.timestamp, model: msg.model || "",
+                     blocks: blocks, hasText: hasText, hasTool: hasTool });
+      } else if (e.type === "system" || e.type === "attachment") {
+        var label, body;
+        if (e.type === "attachment") {
+          label = "Attachment · " + ((e.attachment && e.attachment.type) || "unknown");
+          body = JSON.stringify(e.attachment || {}, null, 2);
+        } else {
+          label = "System · " + (e.subtype || "event");
+          body = e.content ? String(e.content) : JSON.stringify(e, null, 2);
+        }
+        turns.push({ id: "m" + (idx++), role: "note", label: label, body: body, ts: e.timestamp,
+                     hasText: false, hasTool: false, blocks: [] });
+      }
+    });
+    return { turns: turns, meta: meta, counts: counts };
+  }
+
+  /* ---------- open flow ---------- */
+  function openText(text, label) {
+    var t = (text || "").trim();
+    if (!t) { notice("Nothing to open yet. Choose a file or paste its contents.", "warning"); return; }
+    if (UUID.test(t)) {
+      notice("That is a session ID. This page can't read files on your computer, so it can't find a session by ID. " +
+             "Open the file named " + t + ".jsonl from your Claude projects folder and drop it here.", "warning");
+      return;
+    }
+    var parsed = parseJsonl(t);
+    if (!parsed.events.length) {
+      notice("No readable JSON lines found. Is this a Claude Code .jsonl session file?", "danger");
+      return;
+    }
+    var model = buildModel(parsed.events);
+    model.meta.bad = parsed.bad;
+    state.turns = model.turns;
+    state.meta = model.meta;
+    state.filter = "all";
+    setFilter("all");
+    $("q").value = "";
+    renderHeader(model.meta, model.counts);
+    renderNav();
+    renderList();
+    $("empty").classList.add("d-none");
+    $("workspace").classList.remove("d-none");
+    notice("", "");
+    if (modal) modal.hide();
+    toast("Opened " + (label || "session") + ": " + parsed.events.length + " events" +
+          (parsed.bad ? ", " + parsed.bad + " unreadable line(s) skipped." : "."), "success");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function readFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { openText(String(reader.result), file.name); };
+    reader.onerror = function () { notice("Could not read that file.", "danger"); };
+    reader.readAsText(file);
+  }
+
+  function showModal() { if (modal) modal.show(); }
+
+  /* ---------- wiring ---------- */
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("dragover"); });
+  });
+  drop.addEventListener("drop", function (e) {
+    readFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+  });
+  $("file").addEventListener("change", function (e) { readFile(e.target.files[0]); e.target.value = ""; });
+  $("openPaste").addEventListener("click", function () { openText($("paste").value, "pasted text"); });
+  $("clearBtn").addEventListener("click", function () { $("paste").value = ""; notice("", ""); });
+  $("openBtn").addEventListener("click", showModal);
+  document.querySelectorAll("[data-open-modal]").forEach(function (b) { b.addEventListener("click", showModal); });
+
+  $("q").addEventListener("input", applyFilters);
+  document.querySelectorAll("#filters [data-filter]").forEach(function (b) {
+    b.addEventListener("click", function () { setFilter(b.getAttribute("data-filter")); });
+  });
+  $("showSystem").addEventListener("change", renderList);
+  $("runScripts").addEventListener("change", renderList);
+  $("expandBtn").addEventListener("click", function () {
+    document.querySelectorAll("#list details").forEach(function (d) { d.open = true; });
+  });
+  $("collapseBtn").addEventListener("click", function () {
+    document.querySelectorAll("#list details").forEach(function (d) { d.open = false; });
+  });
+
+  function applyTheme(mode) {
+    document.documentElement.setAttribute("data-bs-theme", mode);
+    $("themeIcon").className = mode === "dark" ? "bi bi-sun" : "bi bi-moon-stars";
+  }
+  applyTheme(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  $("themeBtn").addEventListener("click", function () {
+    applyTheme(document.documentElement.getAttribute("data-bs-theme") === "dark" ? "light" : "dark");
+  });
+
+  document.addEventListener("keydown", function (e) {
+    var tag = (document.activeElement && document.activeElement.tagName) || "";
+    if (e.key === "/" && tag !== "TEXTAREA" && tag !== "INPUT" && !$("workspace").classList.contains("d-none")) {
+      e.preventDefault();
+      $("q").focus();
+    }
+  });
+
+  // Open the dialog on first visit.
+  if (modalEl) modalEl.addEventListener("shown.bs.modal", function () { $("paste").focus(); });
+  showModal();
+})();
+</script>
+</body>
+</html>

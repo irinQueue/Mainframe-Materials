@@ -1,0 +1,11 @@
+{
+  "eval_name": "check-claude-already-installed",
+  "prompt": "check claude",
+  "assertions": [
+    "The reply states the installed Claude Code version (2.1.314)",
+    "The environment check was run through cmd.exe (Command Prompt), not only Git Bash",
+    "Nothing was installed, reinstalled or uninstalled",
+    "A COBOL hello-world was compiled and run, and its output is shown",
+    "The reply ends with a simple message that setup is complete"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "files.associations": {
+    "*.cbl": "COBOL",
+    "*.cpy": "COBOL"
+  },
+  // Fixed-format COBOL guides: col 7 indicator, col 8 Area A, col 12 Area B, col 72 end
+  "editor.rulers": [6, 7, 11, 72],
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "files.trimTrailingWhitespace": false,
+  // COBOL extension (bitlang.cobol): where to find copybooks for Ctrl+Click / F12
+  "coboleditor.copybookdirs": ["copybooks"]
+}

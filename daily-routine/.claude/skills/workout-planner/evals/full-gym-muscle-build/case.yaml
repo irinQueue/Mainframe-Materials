@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: full-gym-muscle-build
+expected_outcome: |
+  A 5-day plan in a day-by-day table, using a push/pull/legs or similar split for experienced users.
+  Uses barbells, dumbbells and cables. Sets x reps fall in the muscle-building range (about 6-15 reps).
+  Each session fits 60 minutes, with rest times and a progression rule.

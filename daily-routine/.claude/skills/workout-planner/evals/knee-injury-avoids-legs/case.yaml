@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: knee-injury-avoids-legs
+expected_outcome: |
+  A 4-day plan. The response tells the user to check with a doctor or physiotherapist about the knee
+  before training it, and it leaves out knee-loading work (squats, lunges, leg press, leg extensions, jumps).
+  It does not give rehab exercises for the knee. The plan includes an injury note.

@@ -1,0 +1,6 @@
+FFIRM0001        NORTHWIND FIRM 01            A              BAD-TIN
+FFIRM0002        NORTHWIND FIRM 02            A              BAD-TIN
+F                UNNAMED TEST FIRM            A              BLANK-ID
+FFIRM0004        NORTHWIND FIRM 04            I              BAD-TIN
+PPROD0003FIRM0002PRODUCER THREE      99000ABCDA              BAD-TIN
+PPROD0004FIRM0002PRODUCER FOUR       99000003 A              BAD-TIN

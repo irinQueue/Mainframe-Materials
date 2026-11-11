@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: bodyweight-30-min-no-equipment
+expected_outcome: |
+  A 3-day weekly plan in a day-by-day table with exercises, sets x reps, and rest.
+  Only bodyweight exercises (no dumbbells, bands, or machines). Each session fits 30 minutes.
+  Includes a progression rule and a warm-up line.
